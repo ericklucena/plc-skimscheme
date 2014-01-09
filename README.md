@@ -25,11 +25,10 @@ TODO:
 	get-attr
 	cons
 	lt?
-	Divisão inteira (/)
-	mod
 	eqv? 					-6.1
 	Programas de teste
 	Quicksort recursivo
 
 DONE:
-	Nothing. :'(
+	Divisão inteira (/)
+	mod

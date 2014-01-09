@@ -123,8 +123,10 @@ environment =
           $ insert "+"              (Native numericSum) 
           $ insert "*"              (Native numericMult) 
           $ insert "-"              (Native numericSub) 
+          $ insert "/"              (Native numericDiv) 
+          $ insert "mod"            (Native numericMod) 
           $ insert "car"            (Native car)           
-          $ insert "cdr"            (Native cdr)           
+          $ insert "cdr"            (Native cdr)
             empty
 
 type StateT = Map String LispVal
@@ -151,6 +153,8 @@ instance Monad StateTransformer where
 -- Includes some auxiliary functions. Does not include functions that modify
 -- state. These functions, such as define and set!, must run within the
 -- StateTransformer monad. 
+
+
 
 car :: [LispVal] -> LispVal
 car [List (a:as)] = a
@@ -185,6 +189,14 @@ numericSum l = numericBinOp (+) l
 numericMult :: [LispVal] -> LispVal
 numericMult [] = Number 1
 numericMult l = numericBinOp (*) l
+
+numericDiv :: [LispVal] -> LispVal
+numericDiv [] = Number 1
+numericDiv l = numericBinOp div l
+
+numericMod :: [LispVal] -> LispVal
+numericMod [] = Number 1
+numericMod l = numericBinOp mod l
 
 numericSub :: [LispVal] -> LispVal
 numericSub [] = Error "wrong number of arguments."
