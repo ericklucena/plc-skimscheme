@@ -55,6 +55,9 @@ eval env lam@(List (Atom "lambda":(List formals):body:[])) = return lam
 -- the same semantics as redefining other functions, since define is not
 -- stored as a regular function because of its return type.
 eval env (List (Atom "define": args)) = maybe (define env args) (\v -> return v) (Map.lookup "define" env)
+
+eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(lv) -> case lv of {(Bool x) -> (if (not x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
+
 eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func 
 eval env (Error s)  = return (Error s)
 eval env form = return (Error ("Could not eval the special form: " ++ (show form)))
@@ -78,6 +81,7 @@ define env [(Atom id), val] = defineVar env id val
 define env [(List [Atom id]), val] = defineVar env id val
 -- define env [(List l), val]                                       
 define env args = return (Error "wrong number of arguments")
+
 defineVar env id val = 
   ST (\s -> let (ST f)    = eval env val
                 (result, newState) = f s
@@ -124,7 +128,7 @@ environment =
           $ insert "*"              (Native numericMult) 
           $ insert "-"              (Native numericSub) 
           $ insert "/"              (Native numericDiv) 
-          $ insert "mod"            (Native numericMod) 
+          $ insert "modulo"         (Native numericMod) 
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
             empty
@@ -191,12 +195,16 @@ numericMult [] = Number 1
 numericMult l = numericBinOp (*) l
 
 numericDiv :: [LispVal] -> LispVal
-numericDiv [] = Number 1
-numericDiv l = numericBinOp div l
+numericDiv args@([Number x, Number y]) = if ( y == 0)
+                                    then Error "division by zero"
+                                    else numericBinOp div args
+numericDiv _ = Error "Wrong number of arguments."
 
 numericMod :: [LispVal] -> LispVal
-numericMod [] = Number 1
-numericMod l = numericBinOp mod l
+numericMod args@([Number x, Number y]) = if ( y == 0)
+                                    then Error "undefined for 0"
+                                    else numericBinOp div args
+numericMod _ = Error "Wrong number of arguments."
 
 numericSub :: [LispVal] -> LispVal
 numericSub [] = Error "wrong number of arguments."

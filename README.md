@@ -16,7 +16,6 @@ SSInterpreter "(begin (define f (lambda (x) (+ x 10))) (define result (f (car '(
 
 
 TODO:
-	Função condicional (if)	- 4.1.5
 	Chamadas recursivas 	- 4.1.3
 	Variáveis locais (let)	- 4.2.2
 	Atribuição (set!)
@@ -30,5 +29,6 @@ TODO:
 	Quicksort recursivo
 
 DONE:
+	Função condicional (if)	- 4.1.5
 	Divisão inteira (/)
-	mod
+	modulo
