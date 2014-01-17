@@ -56,11 +56,21 @@ eval env lam@(List (Atom "lambda":(List formals):body:[])) = return lam
 -- stored as a regular function because of its return type.
 eval env (List (Atom "define": args)) = maybe (define env args) (\v -> return v) (Map.lookup "define" env)
 
-eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(lv) -> case lv of {(Bool x) -> (if (not x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
+eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(lv) -> case lv of {(Bool x) -> (if (x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
+
+eval env (List (Atom "let": args: body : [])) = ST( \s -> let
+                                              (ST m) = ((setLet env args) >>= (\x -> (eval env body)))
+                                              (result,state) = m s
+                                              in (result,s))
+
 
 eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func 
 eval env (Error s)  = return (Error s)
 eval env form = return (Error ("Could not eval the special form: " ++ (show form)))
+
+setLet :: StateT -> LispVal -> StateTransformer LispVal
+setLet env (List ( (List [Atom id, val]) : []) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s)))
+setLet env (List ( (List [Atom id, val]) : xs) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s))) >> setLet env (List xs)
 
 stateLookup :: StateT -> String -> StateTransformer LispVal
 stateLookup env var = ST $ 
@@ -203,7 +213,7 @@ numericDiv _ = Error "Wrong number of arguments."
 numericMod :: [LispVal] -> LispVal
 numericMod args@([Number x, Number y]) = if ( y == 0)
                                     then Error "undefined for 0"
-                                    else numericBinOp div args
+                                    else numericBinOp mod args
 numericMod _ = Error "Wrong number of arguments."
 
 numericSub :: [LispVal] -> LispVal
