@@ -138,6 +138,7 @@ environment =
           $ insert "*"              (Native numericMult) 
           $ insert "-"              (Native numericSub) 
           $ insert "/"              (Native numericDiv) 
+          $ insert "lt?"            (Native numericLt) 
           $ insert "modulo"         (Native numericMod) 
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
@@ -209,6 +210,10 @@ numericDiv args@([Number x, Number y]) = if ( y == 0)
                                     then Error "division by zero"
                                     else numericBinOp div args
 numericDiv _ = Error "Wrong number of arguments."
+
+numericLt :: [LispVal] -> LispVal
+numericLt args@([Number x, Number y]) = Bool $ x < y
+numericLt _ = Error "Wrong number of arguments."
 
 numericMod :: [LispVal] -> LispVal
 numericMod args@([Number x, Number y]) = if ( y == 0)
