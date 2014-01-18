@@ -139,7 +139,8 @@ environment =
           $ insert "-"              (Native numericSub) 
           $ insert "/"              (Native numericDiv) 
           $ insert "lt?"            (Native numericLt) 
-          $ insert "modulo"         (Native numericMod) 
+          $ insert "modulo"         (Native numericMod)
+          $ insert "eqv?"           (Native eqv)  
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
             empty
@@ -181,6 +182,9 @@ cdr (List (a:as) : ls) = List as
 cdr (DottedList (a:[]) c : ls) = c
 cdr (DottedList (a:as) c : ls) = DottedList as c
 cdr ls = Error "invalid list."
+
+eqv :: [LispVal] -> LispVal
+eqv [ a , b ] = Bool (a == b)
 
 predNumber :: [LispVal] -> LispVal
 predNumber (Number _ : []) = Bool True

@@ -20,3 +20,13 @@ data LispVal = Atom String
   | Bool Bool
   | Error String
   | Native ([LispVal] -> LispVal)
+
+
+instance Eq LispVal where
+  (==) (Atom a)(Atom b) = (a == b)
+  (==) (List a)(List b) = (a == b)
+  (==) (DottedList as a) (DottedList bs b) = (a == b && as == bs)
+  (==) (Number a)(Number b) = (a == b)
+  (==) (String a )(String b) = ( a == b)
+  (==) (Bool a)(Bool b) = ( a && b || (not a) && (not b))
+  (==) _ _ = (False)

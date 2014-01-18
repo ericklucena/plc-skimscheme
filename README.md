@@ -22,7 +22,6 @@ TODO:
 	set-attr!
 	get-attr
 	cons
-	eqv? 					-6.1
 	Programas de teste
 	Quicksort recursivo
 
@@ -32,3 +31,4 @@ DONE:
 	modulo
 	Variáveis locais (let)	- 4.2.2
 	lt?
+	eqv? 					-6.1
