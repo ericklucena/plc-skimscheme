@@ -141,6 +141,7 @@ environment =
           $ insert "lt?"            (Native numericLt) 
           $ insert "modulo"         (Native numericMod)
           $ insert "eqv?"           (Native eqv)  
+          $ insert "cons"            (Native cons)           
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
             empty
@@ -185,6 +186,9 @@ cdr ls = Error "invalid list."
 
 eqv :: [LispVal] -> LispVal
 eqv [ a , b ] = Bool (a == b)
+
+cons :: [LispVal]-> LispVal
+cons [a, List b] = List (a:b)
 
 predNumber :: [LispVal] -> LispVal
 predNumber (Number _ : []) = Bool True

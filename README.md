@@ -21,7 +21,6 @@ TODO:
 	create-struct
 	set-attr!
 	get-attr
-	cons
 	Programas de teste
 	Quicksort recursivo
 
@@ -32,3 +31,4 @@ DONE:
 	Variáveis locais (let)	- 4.2.2
 	lt?
 	eqv? 					-6.1
+	cons
