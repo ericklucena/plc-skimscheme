@@ -58,6 +58,8 @@ eval env (List (Atom "define": args)) = maybe (define env args) (\v -> return v)
 
 eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(lv) -> case lv of {(Bool x) -> (if (x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
 
+eval env (List (Atom "set!": args@(Atom var:value:[]))) = stateLookup env var >>= (\x -> case x of {error@(Error _) ->  return error; otherwise -> define env args })
+
 eval env (List (Atom "let": args: body : [])) = ST( \s -> let
                                               (ST m) = ((setLet env args) >>= (\x -> (eval env body)))
                                               (result,state) = m s
