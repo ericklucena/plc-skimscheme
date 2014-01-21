@@ -46,7 +46,8 @@ eval env amb val@(Number _) = return val
 eval env amb val@(Bool _) = return val
 eval env amb (List [Atom "quote", val]) = return val
 eval env amb (List (Atom "begin":[v])) = eval env amb v
-eval env amb (List (Atom "begin": l: ls)) = eval env amb l >> eval env amb (List (Atom "begin": ls))
+eval env amb (List (Atom "begin": l: ls)) = (eval env amb l) >>= (\(result) -> case result of { (error@(Error _)) -> return error; otherwise -> eval env amb (List (Atom "begin": ls))})
+--eval env amb (List (Atom "begin": l: ls)) = eval env amb l >> eval env amb (List (Atom "begin": ls))
 eval env amb (List (Atom "begin":[])) = return (List [])
 eval env amb lam@(List (Atom "lambda":(List formals):body:[])) = return lam
 -- The following line is slightly more complex because we are addressing the
