@@ -233,7 +233,7 @@ orFunction _ = Error "invalid arguments."
 
 notFunction :: [LispVal] -> LispVal
 notFunction [Bool a] = Bool $ not a
-notFunction _ = Error "invalid arguments."
+notFunction _ = Bool False
 
 eqv :: [LispVal] -> LispVal
 eqv [a , b] = Bool (a == b)
