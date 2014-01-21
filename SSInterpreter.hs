@@ -60,13 +60,16 @@ eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test
 
 eval env (List (Atom "set!": args@(Atom var:value:[]))) = stateLookup env var >>= (\x -> case x of {error@(Error _) ->  return error; otherwise -> define env args })
 
-eval env (List (Atom "let": args: body : [])) = ST( \s -> let
-                                              (ST m) = ((setLet env args) >>= (\x -> (eval env body)))
+eval env (List (Atom "let": args: body)) = ST( \s -> let
+                                              (ST m) = ((setLet env args) >>= (\x -> (eval env (List (Atom "begin": body)))))
                                               (result,state) = m s
                                               in (result,s))
 
 
 eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func 
+
+
+
 eval env (Error s)  = return (Error s)
 eval env form = return (Error ("Could not eval the special form: " ++ (show form)))
 
@@ -141,11 +144,16 @@ environment =
           $ insert "-"              (Native numericSub) 
           $ insert "/"              (Native numericDiv) 
           $ insert "lt?"            (Native numericLt) 
+          $ insert ">"              (Native numericGt)
           $ insert "modulo"         (Native numericMod)
           $ insert "eqv?"           (Native eqv)  
-          $ insert "cons"            (Native cons)           
+          $ insert "cons"           (Native cons)           
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
+          $ insert "append"         (Native append)
+          $ insert "or"             (Native orFunction)
+          $ insert "not"            (Native notFunction)
+          $ insert "null?"          (Native nullFunction)
             empty
 
 type StateT = Map String LispVal
@@ -173,7 +181,9 @@ instance Monad StateTransformer where
 -- state. These functions, such as define and set!, must run within the
 -- StateTransformer monad. 
 
-
+nullFunction :: [ LispVal ] -> LispVal
+nullFunction [List []] = Bool True
+nullFunction _ = Bool False
 
 car :: [LispVal] -> LispVal
 car [List (a:as)] = a
@@ -186,11 +196,20 @@ cdr (DottedList (a:[]) c : ls) = c
 cdr (DottedList (a:as) c : ls) = DottedList as c
 cdr ls = Error "invalid list."
 
+orFunction :: [LispVal] -> LispVal
+orFunction [Bool a, Bool b] = Bool $ a || b
+
+notFunction :: [LispVal] -> LispVal
+notFunction [Bool a] = Bool $ not a
+
 eqv :: [LispVal] -> LispVal
 eqv [ a , b ] = Bool (a == b)
 
 cons :: [LispVal]-> LispVal
 cons [a, List b] = List (a:b)
+
+append:: [LispVal] -> LispVal
+append [List a, List b] = List(a++b)
 
 predNumber :: [LispVal] -> LispVal
 predNumber (Number _ : []) = Bool True
@@ -224,6 +243,10 @@ numericDiv _ = Error "Wrong number of arguments."
 numericLt :: [LispVal] -> LispVal
 numericLt args@([Number x, Number y]) = Bool $ x < y
 numericLt _ = Error "Wrong number of arguments."
+
+numericGt :: [LispVal] -> LispVal
+numericGt args@([Number x, Number y]) = Bool $ x > y
+numericGt _ = Error "Wrong number of arguments."
 
 numericMod :: [LispVal] -> LispVal
 numericMod args@([Number x, Number y]) = if ( y == 0)
