@@ -109,7 +109,7 @@
 
 
 ; PROGRAMA 5 - let: usa o let e variáveis locais
-; String "(begin (define x 4) (let ((x 2) (y 10)) (+ x y) x))"
+; String: "(begin (define x 4) (let ((x 2) (y 10)) (+ x y) (set! x 33) x))"
 
 (begin 
 
@@ -117,7 +117,8 @@
 
     (let 
         ((x 2) (y 10)) 
-        (+ x y) 
+        (+ x y)
+        (set! x 33)
         x
     )
 )
@@ -143,16 +144,17 @@
 )
 
 ; PROGRAMA 8 - testa create-struct, set-attr! e get-attr:
-; String: "(begin (define estrutura (create-struct '(atributo1 atributo2 atributo3))) (set! estrutura (set-attr! estrutura atributo1 \"Nós \")) (set! estrutura (set-attr! estrutura atributo2 \"amamos \")) (set! estrutura (set-attr! estrutura atributo3 \"PLC!\")) (define result (string-append (string-append (get-attr estrutura atributo1) (get-attr estrutura atributo2)) (get-attr estrutura atributo3))) result)"
+; String: "(begin (define estrutura (create-struct '(atributo1 atributo2 atributo3 atributo4))) (set! estrutura (set-attr! estrutura atributo1 \"Nós \")) (set! estrutura (set-attr! estrutura atributo2 \"amamos \")) (set! estrutura (set-attr! estrutura atributo3 \"PLC! <3\")) (set! estrutura (set-attr! estrutura atributo4 #t)) (define result (string-append (string-append (get-attr estrutura atributo1) (get-attr estrutura atributo2)) (get-attr estrutura atributo3))) result)"
 
 (begin 
     (define estrutura
-        (create-struct '(atributo1 atributo2 atributo3))
+        (create-struct '(atributo1 atributo2 atributo3 atributo4))
     )
 
     (set! estrutura (set-attr! estrutura atributo1 "Nós "))
     (set! estrutura (set-attr! estrutura atributo2 "amamos "))
-    (set! estrutura (set-attr! estrutura atributo3 "PLC!"))
+    (set! estrutura (set-attr! estrutura atributo3 "PLC! <3"))
+    (set! estrutura (set-attr! estrutura atributo4 #t))
 
     (define result (string-append (string-append (get-attr estrutura atributo1) (get-attr estrutura atributo2)) (get-attr estrutura atributo3)))
     result

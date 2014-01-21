@@ -16,9 +16,7 @@ SSInterpreter "(begin (define f (lambda (x) (+ x 10))) (define result (f (car '(
 
 
 TODO:
-	Chamadas recursivas 	- 4.1.3
-	Programas de teste
-	Quicksort recursivo
+	FUNCTIONAL PROGRAMMING, BITCHES. YEAH!
 
 DONE:
 	Função condicional (if)	- 4.1.5
@@ -32,3 +30,6 @@ DONE:
 	create-struct
 	set-attr!
 	get-attr
+	Chamadas recursivas 	- 4.1.3
+	Programas de teste
+	Quicksort recursivo
