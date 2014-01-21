@@ -1,5 +1,6 @@
-module LispVal (LispVal(Atom, List, DottedList, Number, String, Bool, Error, Native)) where
+module LispVal (LispVal(Atom, List, DottedList, Number, String, Bool, Error, Native, Struct)) where
 
+import Data.Map
 
 -----------------------------------------------------------
 --                    BASIC DATATYPES                    --
@@ -20,6 +21,7 @@ data LispVal = Atom String
   | Bool Bool
   | Error String
   | Native ([LispVal] -> LispVal)
+  | Struct (Map String LispVal)
 
 
 instance Eq LispVal where
@@ -29,4 +31,5 @@ instance Eq LispVal where
   (==) (Number a)(Number b) = (a == b)
   (==) (String a )(String b) = ( a == b)
   (==) (Bool a)(Bool b) = ( a == b)
+  (==) (Struct mapA)(Struct mapB) = ( mapA == mapB )
   (==) _ _ = (False)

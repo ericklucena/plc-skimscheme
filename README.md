@@ -17,8 +17,6 @@ SSInterpreter "(begin (define f (lambda (x) (+ x 10))) (define result (f (car '(
 
 TODO:
 	Chamadas recursivas 	- 4.1.3
-	create-struct
-	set-attr!
 	get-attr
 	Programas de teste
 	Quicksort recursivo
@@ -32,3 +30,5 @@ DONE:
 	eqv? 					-6.1
 	cons
 	Atribuição (set!)
+	create-struct
+	set-attr!

@@ -56,15 +56,20 @@ eval env lam@(List (Atom "lambda":(List formals):body:[])) = return lam
 -- stored as a regular function because of its return type.
 eval env (List (Atom "define": args)) = maybe (define env args) (\v -> return v) (Map.lookup "define" env)
 
-eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(lv) -> case lv of {(Bool x) -> (if (x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
+eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(result) -> case result of {(Bool x) -> (if (x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
 
 eval env (List (Atom "set!": args@(Atom var:value:[]))) = stateLookup env var >>= (\x -> case x of {error@(Error _) ->  return error; otherwise -> define env args })
+
+eval env (List [Atom "create-struct", List (Atom "quote": List val : [])]) = return (createStruct val)
+
+eval env (List [Atom "set-attr!", struct, Atom id, val]) = 
+  eval env struct >>= (\result -> case result of{(Struct struct) -> return (setAttrStruct (Struct struct: Atom id: val:[]));
+    otherwise -> (return (Error "not a struct"))})
 
 eval env (List (Atom "let": args: body)) = ST( \s -> let
                                               (ST m) = ((setLet env args) >>= (\x -> (eval env (List (Atom "begin": body)))))
                                               (result,state) = m s
                                               in (result,s))
-
 
 eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func 
 
@@ -72,6 +77,20 @@ eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func
 
 eval env (Error s)  = return (Error s)
 eval env form = return (Error ("Could not eval the special form: " ++ (show form)))
+
+createStruct :: [LispVal] -> LispVal
+createStruct [] = Struct empty
+createStruct ( (Atom (id)) : nextArgs) = case (createStruct nextArgs) of
+                                 Struct (args) -> Struct ( insert id (Number 0) args )
+                                 error@(Error s) -> error
+createStruct _ = Error ("not a valid struct.")
+
+setAttrStruct :: [LispVal] -> LispVal
+setAttrStruct (Struct struct : Atom id : val :[]) = case (Map.lookup id struct) of {
+                                                                                Nothing -> Error "field does not exist.";
+                                                                                otherwise -> Struct (insert id val struct)
+                                                                              }
+setAttrStruct _ = Error "not a valid struct."
 
 setLet :: StateT -> LispVal -> StateTransformer LispVal
 setLet env (List ( (List [Atom id, val]) : []) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s)))
@@ -207,6 +226,7 @@ eqv [ a , b ] = Bool (a == b)
 
 cons :: [LispVal]-> LispVal
 cons [a, List b] = List (a:b)
+cons _ = Error "invalid arguments."
 
 append:: [LispVal] -> LispVal
 append [List a, List b] = List(a++b)
