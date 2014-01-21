@@ -64,7 +64,11 @@ eval env (List [Atom "create-struct", List (Atom "quote": List val : [])]) = ret
 
 
 eval env (List [Atom "set-attr!", struct, Atom id, val]) = 
-  eval env struct >>= (\result -> case result of{(Struct struct) -> return (setAttrStruct (Struct struct: Atom id: val:[]));
+  eval env struct >>= (\result -> case result of{(Struct struct) -> return (setAttr (Struct struct: Atom id: val:[]));
+    otherwise -> (return (Error "not a struct"))})
+
+eval env (List [Atom "get-attr", struct, Atom id]) = 
+  eval env struct >>= (\result -> case result of{(Struct struct) -> return (getAttr (Struct struct: Atom id: []));
     otherwise -> (return (Error "not a struct"))})
 
 eval env (List (Atom "let": args: body : [])) = ST( \s -> let
@@ -84,12 +88,19 @@ createStruct ( (Atom (id)) : nextArgs) = case (createStruct nextArgs) of
                                  error@(Error s) -> error
 createStruct _ = Error ("not a valid struct.")
 
-setAttrStruct :: [LispVal] -> LispVal
-setAttrStruct (Struct struct : Atom id : val :[]) = case (Map.lookup id struct) of {
+setAttr :: [LispVal] -> LispVal
+setAttr (Struct struct : Atom id : val :[]) = case (Map.lookup id struct) of {
                                                                                 Nothing -> Error "field does not exist.";
                                                                                 otherwise -> Struct (insert id val struct)
                                                                               }
-setAttrStruct _ = Error "not a valid struct."
+setAttr _ = Error "not a valid struct."
+
+getAttr :: [LispVal] -> LispVal
+getAttr (Struct struct : Atom id : []) = case (Map.lookup id struct) of {
+                                                                          Nothing -> Error "field does not exist.";
+                                                                          Just val -> val
+                                                                        }
+getAttr _ = Error "not a valid struct."
 
 setLet :: StateT -> LispVal -> StateTransformer LispVal
 setLet env (List ( (List [Atom id, val]) : []) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s)))

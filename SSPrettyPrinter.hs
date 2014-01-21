@@ -1,5 +1,7 @@
 module SSPrettyPrinter(show) where
+
 import LispVal
+import qualified Data.Map as Map
 
 -----------------------------------------------------------
 --                    PRETTY PRINTER                     --
@@ -17,7 +19,7 @@ instance Show LispVal where
   show (DottedList h t) = "(" ++ showListContents h ++ " . " ++ show t ++ ")"  
   show (Native p) = "<native procedure>"
   show (Error s) = s
-  show (Struct m) = "Struct (" ++show m ++ ")"
+  show (Struct m) = "Struct{" ++ show (Map.toList m) ++ "}"
   
 -- This function could be replaced by (unwords.map show). The unwords
 -- function takes a list of String values and uses them to build a 
