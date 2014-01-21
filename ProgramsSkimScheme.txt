@@ -1,0 +1,193 @@
+; PROGRAMA 1 - Quicksort: usa o null?, append, cons, if, not, lt?
+; String: "(begin (define quicksort (lambda (L) (if (null? L) '() (append (quicksort (list< (car L) (cdr L))) (cons (car L) (quicksort (list>= (car L) (cdr L)))))))) (define list< (lambda (a b) (if  (null? b) '() (if ( lt? a (car b)) (list< a (cdr b)) (cons (car b)  (list< a (cdr b))) )))) (define list>= (lambda (a b) (if (null? b) '() (if (not ( lt? a (car b))) (list>= a (cdr b)) (cons (car b)  (list>= a (cdr b))) )))) (define result (quicksort '(5 3 2 6 1))) result)"
+
+(begin 
+
+    (define quicksort 
+        (lambda (L) 
+            (if (null? L) 
+                '() 
+                (append (quicksort (list< (car L) (cdr L))) 
+                    (cons (car L) (quicksort (list>= (car L) (cdr L))))
+                )
+            )
+        )
+    ) 
+
+    (define list< 
+        (lambda (a b) 
+            (if  (null? b) 
+                '() 
+                (if ( lt? a (car b))
+                    (list< a (cdr b)) 
+                    (cons (car b)  (list< a (cdr b))) 
+                )
+            )
+        )
+    ) 
+
+    (define list>= 
+        (lambda (a b) 
+            (if (null? b) 
+                '() 
+                (if (not ( lt? a (car b))) 
+                    (list>= a (cdr b)) 
+                    (cons (car b)  (list>= a (cdr b))) 
+                )
+            )
+        )
+    ) 
+
+    (define result (quicksort '(5 3 2 6 1))) 
+
+    result
+)
+
+
+; PROGRAMA 2 - Fibonacci: usa o if, eqv? e recursão
+; String: "(begin (define fib2 (lambda (x) (if (eqv? x 0) 0 (if (eqv? x 1) 1 (+ (fib2 (- x 1)) (fib2 (- x 2))))))) (define result (fib2 8) ) result)"
+
+(begin 
+
+    (define fib2 
+        (lambda (x) 
+            (if (eqv? x 0) 
+                0 
+                (if (eqv? x 1) 
+                    1 
+                    (+ (fib2 (- x 1)) (fib2 (- x 2)))
+                )
+            )
+        )
+    )
+
+    (define result (fib2 8)) 
+
+    result
+)
+
+; PROGRAMA 3 - Media: usa o div 
+; String: "(begin (define media (lambda (x y z a b) (/ (+ x y z a b ) 5) )) (define result (media 2 3 4 5 3)) result)"
+
+(begin 
+
+    (define media 
+        (lambda (x y z a b) 
+            (/ (+ x y z a b ) 5) 
+        )
+    ) 
+
+    (define result (media 2 3 4 5 3)) 
+
+    result
+)
+
+; PROGRAMA 4 - MDC: usa o modulo, eq?, e o if
+; String: "(begin (define mdcMod (lambda (x y) (if (eqv? x 0) y (if (eqv? y 0) x (if (> x y) (mdcMod (modulo x y) y) (mdcMod (modulo y x) x)))))) (define result (mdcMod 40 8)) result)"
+
+(begin 
+
+    (define mdcMod 
+        (lambda (x y) 
+            (if (eqv? x 0) 
+                y 
+                (if (eqv? y 0) 
+                    x 
+                    (if (> x y) 
+                        (mdcMod (modulo x y) y) 
+                        (mdcMod (modulo y x) x)
+                    )
+                )
+            )
+        )
+    )
+
+    (define result (mdcMod 40 8)) 
+
+    result
+)
+
+
+; PROGRAMA 5 - let: usa o let e variáveis locais
+; String "(begin (define x 4) (let ((x 2) (y 10)) (+ x y) x))"
+
+(begin 
+
+    (define x 4) 
+
+    (let 
+        ((x 2) (y 10)) 
+        (+ x y) 
+        x
+    )
+)
+
+; PROGRAMA 6 - set: 
+; String: "(begin (define x 4) (set! x 10) (set! y 5))"
+
+(begin
+
+    (define x 4)
+    (set! x 10)
+    (set! y 5)
+)
+
+; PROGRAMA 7 - divisão por zero
+; String: "(begin (define x 4) (define y 0) (/ x y))"
+
+(begin
+    (define x 4)
+    (define y 0)
+
+    (/ x y) 
+)
+
+; PROGRAMA 8 - testa create-struct, set-attr! e get-attr:
+; String: "(begin (define estrutura (create-struct '(atributo1 atributo2 atributo3))) (set! estrutura (set-attr! estrutura atributo1 (1 2))) (set! estrutura (set-attr! estrutura atributo2 (3 4))) (set! estrutura (set-attr! estrutura atributo3 (5 6))) (append (get-attr estrutura atributo1) (get-attr estrutura atributo2)))"
+
+(begin 
+    (define estrutura
+        (create-struct '(atributo1 atributo2 atributo3))
+    ) 
+
+    (set! estrutura (set-attr! estrutura atributo1 (1 2)))
+    (set! estrutura (set-attr! estrutura atributo2 (3 4)))
+    (set! estrutura (set-attr! estrutura atributo3 (5 6)))
+
+    (append (get-attr estrutura atributo1) (get-attr estrutura atributo2))
+
+)
+
+; PROGRAMA 9 - fatorial: 
+; String: "(begin (define fatorial (lambda (x) (if (eqv? x 0) 1 (* (fatorial (- x 1)) x)))) (define result (fatorial 5)) result)"
+
+(begin
+
+    (define fatorial 
+        (lambda (x)
+            (if (eqv? x 0) 1 (* (fatorial (- x 1)) x))
+        )
+    )
+
+    (define result (fatorial 5))
+
+    result
+)
+
+; PROGRAMA 10 - somatório de uma lista:
+; String: "(begin (define sum (lambda (x) (if (null? x) 0 (+ (sum (cdr x)) (car x))))) (define result (sum '(1 2 3 4 5))) result)" 
+
+(begin
+
+    (define sum 
+        (lambda (x)
+            (if (null? x) 0 (+ (sum (cdr x)) (car x)))
+        )
+    )
+
+    (define result (sum '(1 2 3 4 5)))
+
+    result
+)
+
+
