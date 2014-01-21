@@ -143,19 +143,19 @@
 )
 
 ; PROGRAMA 8 - testa create-struct, set-attr! e get-attr:
-; String: "(begin (define estrutura (create-struct '(atributo1 atributo2 atributo3))) (set! estrutura (set-attr! estrutura atributo1 (1 2))) (set! estrutura (set-attr! estrutura atributo2 (3 4))) (set! estrutura (set-attr! estrutura atributo3 (5 6))) (append (get-attr estrutura atributo1) (get-attr estrutura atributo2)))"
+; String: "(begin (define estrutura (create-struct '(atributo1 atributo2 atributo3))) (set! estrutura (set-attr! estrutura atributo1 \"Nós \")) (set! estrutura (set-attr! estrutura atributo2 \"amamos \")) (set! estrutura (set-attr! estrutura atributo3 \"PLC!\")) (define result (string-append (string-append (get-attr estrutura atributo1) (get-attr estrutura atributo2)) (get-attr estrutura atributo3))) result)"
 
 (begin 
     (define estrutura
         (create-struct '(atributo1 atributo2 atributo3))
-    ) 
+    )
 
-    (set! estrutura (set-attr! estrutura atributo1 (1 2)))
-    (set! estrutura (set-attr! estrutura atributo2 (3 4)))
-    (set! estrutura (set-attr! estrutura atributo3 (5 6)))
+    (set! estrutura (set-attr! estrutura atributo1 "Nós "))
+    (set! estrutura (set-attr! estrutura atributo2 "amamos "))
+    (set! estrutura (set-attr! estrutura atributo3 "PLC!"))
 
-    (append (get-attr estrutura atributo1) (get-attr estrutura atributo2))
-
+    (define result (string-append (string-append (get-attr estrutura atributo1) (get-attr estrutura atributo2)) (get-attr estrutura atributo3)))
+    result
 )
 
 ; PROGRAMA 9 - fatorial: 

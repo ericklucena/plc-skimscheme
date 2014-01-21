@@ -181,6 +181,7 @@ environment =
           $ insert "car"            (Native car)           
           $ insert "cdr"            (Native cdr)
           $ insert "append"         (Native append)
+          $ insert "string-append"  (Native stringAppend)
           $ insert "or"             (Native orFunction)
           $ insert "not"            (Native notFunction)
           $ insert "null?"          (Native nullFunction)
@@ -228,19 +229,27 @@ cdr ls = Error "invalid list."
 
 orFunction :: [LispVal] -> LispVal
 orFunction [Bool a, Bool b] = Bool $ a || b
+orFunction _ = Error "invalid arguments."
 
 notFunction :: [LispVal] -> LispVal
 notFunction [Bool a] = Bool $ not a
+notFunction _ = Error "invalid arguments."
 
 eqv :: [LispVal] -> LispVal
-eqv [ a , b ] = Bool (a == b)
+eqv [a , b] = Bool (a == b)
+eqv _ = Error "wrong number of arguments."
 
 cons :: [LispVal]-> LispVal
 cons [a, List b] = List (a:b)
 cons _ = Error "invalid arguments."
 
-append:: [LispVal] -> LispVal
+append :: [LispVal] -> LispVal
 append [List a, List b] = List(a++b)
+append _ = Error "invalid arguments."
+
+stringAppend :: [LispVal] -> LispVal
+stringAppend [String a, String b] = String (a ++ b)
+stringAppend _ = Error "invalid arguments."
 
 predNumber :: [LispVal] -> LispVal
 predNumber (Number _ : []) = Bool True
