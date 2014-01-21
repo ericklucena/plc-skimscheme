@@ -39,48 +39,48 @@ import SSPrettyPrinter
 -----------------------------------------------------------
 --                      INTERPRETER                      --
 -----------------------------------------------------------
-eval :: StateT -> LispVal -> StateTransformer LispVal
-eval env val@(String _) = return val
-eval env val@(Atom var) = stateLookup env var 
-eval env val@(Number _) = return val
-eval env val@(Bool _) = return val
-eval env (List [Atom "quote", val]) = return val
-eval env (List (Atom "begin":[v])) = eval env v
-eval env (List (Atom "begin": l: ls)) = eval env l >> eval env (List (Atom "begin": ls))
-eval env (List (Atom "begin":[])) = return (List [])
-eval env lam@(List (Atom "lambda":(List formals):body:[])) = return lam
+eval :: StateT -> StateT ->  LispVal -> StateTransformer LispVal
+eval env amb val@(String _) = return val
+eval env amb val@(Atom var) = stateLookup env amb var 
+eval env amb val@(Number _) = return val
+eval env amb val@(Bool _) = return val
+eval env amb (List [Atom "quote", val]) = return val
+eval env amb (List (Atom "begin":[v])) = eval env amb v
+eval env amb (List (Atom "begin": l: ls)) = eval env amb l >> eval env amb (List (Atom "begin": ls))
+eval env amb (List (Atom "begin":[])) = return (List [])
+eval env amb lam@(List (Atom "lambda":(List formals):body:[])) = return lam
 -- The following line is slightly more complex because we are addressing the
 -- case where define is redefined by the user (whatever is the user's reason
 -- for doing so. The problem is that redefining define does not have
 -- the same semantics as redefining other functions, since define is not
 -- stored as a regular function because of its return type.
-eval env (List (Atom "define": args)) = maybe (define env args) (\v -> return v) (Map.lookup "define" env)
+eval env amb (List (Atom "define": args)) = maybe (define env amb args) (\v -> return v) (Map.lookup "define" (union env amb))
 
-eval env (List (Atom "if": test : consequent : alternate : [])) = (eval env test) >>= (\(result) -> case result of {(Bool x) -> (if (x) then (eval env consequent) else (eval env alternate));error@(Error _) -> return error; _ -> eval env consequent})
+eval env amb (List (Atom "if": test : consequent : alternate : [])) = (eval env amb test) >>= (\(result) -> case result of {(Bool x) -> (if (x) then (eval env amb consequent) else (eval env amb alternate));error@(Error _) -> return error; _ -> eval env amb consequent})
 
-eval env (List (Atom "set!": args@(Atom var:value:[]))) = stateLookup env var >>= (\x -> case x of {error@(Error _) ->  return error; otherwise -> define env args })
+eval env amb (List (Atom "set!": args@(Atom var:value:[]))) = stateLookup env amb var >>= (\x -> case x of {error@(Error _) ->  return error; otherwise -> define env amb args })
 
-eval env (List [Atom "create-struct", List (Atom "quote": List val : [])]) = return (createStruct val)
+eval env amb (List [Atom "create-struct", List (Atom "quote": List val : [])]) = return (createStruct val)
 
-eval env (List [Atom "set-attr!", struct, Atom id, val]) = 
-  eval env struct >>= (\result -> case result of{(Struct struct) -> return (setAttr (Struct struct: Atom id: val:[]));
+eval env amb (List [Atom "set-attr!", struct, Atom id, val]) = 
+  eval env amb struct >>= (\result -> case result of{(Struct struct) -> return (setAttr (Struct struct: Atom id: val:[]));
     otherwise -> (return (Error "not a struct"))})
 
-eval env (List [Atom "get-attr", struct, Atom id]) = 
-  eval env struct >>= (\result -> case result of{(Struct struct) -> return (getAttr (Struct struct: Atom id: []));
+eval env amb (List [Atom "get-attr", struct, Atom id]) = 
+  eval env amb struct >>= (\result -> case result of{(Struct struct) -> return (getAttr (Struct struct: Atom id: []));
     otherwise -> (return (Error "not a struct"))})
 
-eval env (List (Atom "let": args: body)) = ST( \s -> let
-                                              (ST m) = ((setLet env args) >>= (\x -> (eval env (List (Atom "begin": body)))))
-                                              (result,state) = m s
-                                              in (result,s))
+eval env amb (List (Atom "let": args: body)) = ST( \s a-> let
+                                              (ST m) = ((setLet env amb args) >>= (\x -> (eval env amb (List (Atom "begin": body)))))
+                                              (result, state, ambiance) = m s a
+                                              in (result,state, a))
 
-eval env (List (Atom func : args)) = mapM (eval env) args >>= apply env func 
+eval env amb (List (Atom func : args)) = mapM (eval env amb) args >>= apply env amb func 
 
 
 
-eval env (Error s)  = return (Error s)
-eval env form = return (Error ("Could not eval the special form: " ++ (show form)))
+eval env amb (Error s)  = return (Error s)
+eval env amb form = return (Error ("Could not eval the special form: " ++ (show form)))
 
 createStruct :: [LispVal] -> LispVal
 createStruct [] = Struct empty
@@ -103,16 +103,15 @@ getAttr (Struct struct : Atom id : []) = case (Map.lookup id struct) of {
                                                                         }
 getAttr _ = Error "not a valid struct."
 
-setLet :: StateT -> LispVal -> StateTransformer LispVal
-setLet env (List ( (List [Atom id, val]) : []) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s)))
-setLet env (List ( (List [Atom id, val]) : xs) ) = defineVar env id val >>= (\x -> ST(\s -> (x,s))) >> setLet env (List xs)
+setLet :: StateT -> StateT -> LispVal -> StateTransformer LispVal
+setLet env amb (List ( (List [Atom id, val]) : []) ) = defineVar env amb id val >>= (\x -> ST(\s a -> (x,s,a)))
+setLet env amb (List ( (List [Atom id, val]) : xs) ) = defineVar env amb id val >>= (\x -> ST(\s a -> (x,s,a))) >> setLet env amb (List xs)
 
-stateLookup :: StateT -> String -> StateTransformer LispVal
-stateLookup env var = ST $ 
-  (\s -> 
+stateLookup :: StateT -> StateT -> String -> StateTransformer LispVal
+stateLookup env amb var = ST $ 
+  (\s a -> 
     (maybe (Error "variable does not exist.") 
-           id (Map.lookup var (union s env) 
-    ), s))
+           id (Map.lookup var (union (union (union a s) env ) amb)), s, a))
 
 
 -- Because of monad complications, define is a separate function that is not
@@ -121,16 +120,16 @@ stateLookup env var = ST $
 -- complicate state management. The same principle applies to set!. We are still
 -- not talking about local definitions. That's a completely different
 -- beast.
-define :: StateT -> [LispVal] -> StateTransformer LispVal
-define env [(Atom id), val] = defineVar env id val
-define env [(List [Atom id]), val] = defineVar env id val
--- define env [(List l), val]                                       
-define env args = return (Error "wrong number of arguments")
+define :: StateT -> StateT -> [LispVal] -> StateTransformer LispVal
+define env amb [(Atom id), val] = defineVar env amb id val
+define env amb [(List [Atom id]), val] = defineVar env amb id val
+-- define env amb [(List l), val]                                       
+define env amb args = return (Error "wrong number of arguments")
 
-defineVar env id val = 
-  ST (\s -> let (ST f)    = eval env val
-                (result, newState) = f s
-            in (result, (insert id result newState))
+defineVar env amb id val = 
+  ST (\s a -> let (ST f) = (eval env amb val)
+                  (result, newState, newAmb) = f s a
+              in (result, s, (insert id result newAmb))
      )
 
 
@@ -138,14 +137,14 @@ defineVar env id val =
 -- its third argument yields Nothing. In case it yields Just x, maybe
 -- applies its second argument f to x and yields (f x) as its result.
 -- maybe :: b -> (a -> b) -> Maybe a -> b
-apply :: StateT -> String -> [LispVal] -> StateTransformer LispVal
-apply env func args =  
-                  case (Map.lookup func env) of
+apply :: StateT -> StateT -> String -> [LispVal] -> StateTransformer LispVal
+apply env amb func args =  
+                  case (Map.lookup func (union env amb)) of
                       Just (Native f)  -> return (f args)
                       otherwise -> 
-                        (stateLookup env func >>= \res -> 
+                        (stateLookup env amb func >>= \res -> 
                           case res of 
-                            List (Atom "lambda" : List formals : body:l) -> lambda env formals body args                              
+                            List (Atom "lambda" : List formals : body:l) -> lambda env amb formals body args                              
                             otherwise -> return (Error "not a function.")
                         )
  
@@ -153,16 +152,17 @@ apply env func args =
 -- applying user-defined functions, instead of native ones. We use a very stupid 
 -- kind of dynamic variable (parameter) scoping that does not even support
 -- recursion. This has to be fixed in the project.
-lambda :: StateT -> [LispVal] -> LispVal -> [LispVal] -> StateTransformer LispVal
-lambda env formals body args = 
-  let dynEnv = Prelude.foldr (\(Atom f, a) m -> Map.insert f a m) env (zip formals args)
-  in  eval dynEnv body
+lambda :: StateT -> StateT -> [LispVal] -> LispVal -> [LispVal] -> StateTransformer LispVal
+lambda env amb formals body args = 
+  let dynEnv = Prelude.foldr (\(Atom f, a) m -> Map.insert f a m) (union env amb) (zip formals args)
+  in  eval env dynEnv body
+  --Pode tá com merda
 
 
--- Initial environment of the programs. Maps identifiers to values. 
+-- Initial env ambironment of the programs. Maps identifiers to values. 
 -- Initially, maps function names to function values, but there's 
 -- nothing stopping it from storing general values (e.g., well-known
--- constants, such as pi). The initial environment includes all the 
+-- constants, such as pi). The initial env ambironment includes all the 
 -- functions that are available for programmers.
 environment :: Map String LispVal
 environment =   
@@ -195,13 +195,13 @@ type StateT = Map String LispVal
 -- because a StateTransformer gets the previous state of the interpreter 
 -- and, based on that state, performs a computation that might yield a modified
 -- state (a modification of the previous one). 
-data StateTransformer t = ST (StateT -> (t, StateT))
+data StateTransformer t = ST (StateT -> StateT -> (t, StateT, StateT))
 
 instance Monad StateTransformer where
-  return x = ST (\s -> (x, s))
-  (>>=) (ST m) f = ST (\s -> let (v, newS) = m s
-                                 (ST resF) = f v
-                             in  resF newS
+  return x = ST (\s a -> (x, s, a))
+  (>>=) (ST m) f = ST (\s a-> let (v, newS, newA) = m s a
+                                  (ST resF) = f v
+                             in  resF newS newA
                       )
     
 -----------------------------------------------------------
@@ -323,13 +323,13 @@ unpackNum (Number n) = n
 --                     main FUNCTION                     --
 -----------------------------------------------------------
 
-showResult :: (LispVal, StateT) -> String
-showResult (val, defs) = show val ++ "\n" ++ show (toList defs) ++ "\n"
+showResult :: (LispVal, StateT, StateT) -> String
+showResult (val, defs, amb) = show val ++ "\n" ++ show (toList amb) ++ "\n"
 
-getResult :: StateTransformer LispVal -> (LispVal, StateT)
-getResult (ST f) = f empty -- we start with an empty state. 
+getResult :: StateTransformer LispVal -> (LispVal, StateT, StateT)
+getResult (ST f) = f empty empty -- we start with an empty state. 
 
 main :: IO ()
 main = do args <- getArgs
-          putStr $ showResult $ getResult $ eval environment $ readExpr $ concat $ args 
+          putStr $ showResult $ getResult $ eval environment environment $ readExpr $ concat $ args 
           
